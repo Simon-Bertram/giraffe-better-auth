@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +37,9 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,10 +61,15 @@ export function RegisterForm({
       },
       // Callback functions provided by better-auth
       {
-        onRequest: () => {},
-        onResponse: () => {},
+        onRequest: () => {
+          setIsPending(true);
+        },
+        onResponse: () => {
+          setIsPending(false);
+        },
         onSuccess: () => {
           toast.success("Registration successful");
+          router.push("/profile");
         },
         onError: (ctx) => {
           // Debug: log the error context to see what better-auth provides
@@ -136,8 +146,8 @@ export function RegisterForm({
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  Register
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? "Registering..." : "Register"}
                 </Button>
                 <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                   <span className="bg-card text-muted-foreground relative z-10 px-2">

@@ -4,8 +4,10 @@ import { signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export function SignOutButton() {
+  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
   async function handleSignOut() {
@@ -23,8 +25,13 @@ export function SignOutButton() {
   }
 
   return (
-    <Button onClick={handleSignOut} size="sm" variant="destructive">
-      Sign Out
+    <Button
+      onClick={handleSignOut}
+      size="sm"
+      variant="destructive"
+      disabled={isPending}
+    >
+      {isPending ? "Signing out..." : "Sign Out"}
     </Button>
   );
 }

@@ -19,6 +19,8 @@ import { useForm } from "react-hook-form";
 import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().email().min(6, { message: "Email is required" }),
@@ -29,6 +31,9 @@ export default function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,15 +47,21 @@ export default function LoginForm({
       {
         email: values.email,
         password: values.password,
+        callbackURL: "/profile",
       },
       {
-        onRequest: () => {},
-        onResponse: () => {},
+        onRequest: () => {
+          setIsPending(true);
+        },
+        onResponse: () => {
+          setIsPending(false);
+        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
         },
         onSuccess: () => {
           toast.success("Logged in successfully");
+          router.push("/profile");
         },
       }
     );
@@ -93,7 +104,11 @@ export default function LoginForm({
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input placeholder="password" {...field} />
+                          <Input
+                            placeholder="password"
+                            type="password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormDescription className="sr-only">
                           Enter your password
@@ -111,8 +126,15 @@ export default function LoginForm({
                     </a>
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    Login
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    onClick={() => {
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    disabled={isPending}
+                  >
+                    {isPending ? "Logging in..." : "Login"}
                   </Button>
                   <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                     <span className="bg-card text-muted-foreground relative z-10 px-2">
