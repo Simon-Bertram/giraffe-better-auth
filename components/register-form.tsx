@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
@@ -174,9 +175,12 @@ export function RegisterForm({
                 </div>
                 <div className="text-center text-sm">
                   Already have an account?{" "}
-                  <a href="#" className="underline underline-offset-4">
+                  <Link
+                    href="/auth/login"
+                    className="underline underline-offset-4"
+                  >
                     Sign in
-                  </a>
+                  </Link>
                 </div>
               </div>
             </form>

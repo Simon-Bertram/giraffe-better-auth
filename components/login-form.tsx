@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const formSchema = z.object({
   email: z.string().email().min(6, { message: "Email is required" }),
@@ -158,9 +159,12 @@ export default function LoginForm({
                   </div>
                   <div className="text-center text-sm">
                     Don&apos;t have an account?{" "}
-                    <a href="#" className="underline underline-offset-4">
+                    <Link
+                      href="/auth/register"
+                      className="underline underline-offset-4"
+                    >
                       Sign up
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </form>
