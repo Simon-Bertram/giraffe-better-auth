@@ -61,7 +61,19 @@ export function RegisterForm({
           toast.success("Registration successful");
         },
         onError: (ctx) => {
-          toast.error(ctx.error.message);
+          // Debug: log the error context to see what better-auth provides
+          console.log("Registration error:", ctx);
+
+          // Check if it's a duplicate email error (422 status)
+          if (ctx.error.status === 422) {
+            toast.error(
+              "This email address is already registered. Please use a different email or try logging in."
+            );
+          } else {
+            toast.error(
+              ctx.error.message || "Registration failed. Please try again."
+            );
+          }
         },
       }
     );

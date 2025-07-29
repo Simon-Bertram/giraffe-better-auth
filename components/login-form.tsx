@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { signIn } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email().min(6, { message: "Email is required" }),
@@ -33,6 +35,25 @@ export default function LoginForm({
       password: "",
     },
   });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await signIn.email(
+      {
+        email: values.email,
+        password: values.password,
+      },
+      {
+        onRequest: () => {},
+        onResponse: () => {},
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+        onSuccess: () => {
+          toast.success("Logged in successfully");
+        },
+      }
+    );
+  }
 
   return (
     <>
