@@ -6,13 +6,12 @@ export default function Home() {
     <div>
       <h1>Home</h1>
       <div className="flex gap-2">
-        {" "}
-        <Button variant="outline">
+        <Button variant="outline" asChild>
           <Link href="/auth/register">Register</Link>
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" asChild>
           <Link href="/auth/login">Login</Link>
-        </Button>{" "}
+        </Button>
       </div>
     </div>
   );
