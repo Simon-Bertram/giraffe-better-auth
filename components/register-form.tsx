@@ -50,9 +50,6 @@ export function RegisterForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // TODO: handle registration logic here
-    console.log(values);
-
     await signUp.email(
       {
         name: values.name,
