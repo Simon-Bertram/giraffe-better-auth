@@ -52,8 +52,4 @@ export async function signUpEmailAction(
   return {
     message: "Registration failed. Please try again.",
   };
-
-  // For now, return success - you can implement the actual auth logic later
-  // using the auth client or API as needed
-  return { success: true, message: "Registration successful!" };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,10 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useActionState } from "react";
+import { signUpEmailAction } from "@/app/actions/sign-up-email.action";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
@@ -37,8 +38,11 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
+  const [state, formAction, isPending] = useActionState(signUpEmailAction, {
+    success: false,
+    message: "",
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,41 +54,26 @@ export function RegisterForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await signUp.email(
-      {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      },
-      // Callback functions provided by better-auth
-      {
-        onRequest: () => {
-          setIsPending(true);
-        },
-        onResponse: () => {
-          setIsPending(false);
-        },
-        onSuccess: () => {
-          toast.success("Registration successful");
-          router.push("/profile");
-        },
-        onError: (ctx) => {
-          // Debug: log the error context to see what better-auth provides
-          console.log("Registration error:", ctx);
+    // Create FormData from form values
+    const formData = new FormData();
+    formData.append("name", values.name);
+    formData.append("email", values.email);
+    formData.append("password", values.password);
 
-          // Check if it's a duplicate email error (422 status)
-          if (ctx.error.status === 422) {
-            toast.error(
-              "This email address is already registered. Please use a different email or try logging in."
-            );
-          } else {
-            toast.error(
-              ctx.error.message || "Registration failed. Please try again."
-            );
-          }
-        },
-      }
-    );
+    // Call the server action using startTransition
+    startTransition(() => {
+      formAction(formData);
+    });
+  } // Handle successful registration
+  if (state.success) {
+    toast.success(state.message || "Registration successful!");
+    router.push("/profile");
+    return null; // or redirect immediately
+  }
+
+  // Handle errors
+  if (state.message && !state.success) {
+    toast.error(state.message);
   }
 
   return (
