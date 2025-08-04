@@ -2,7 +2,6 @@
 
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { redirect } from "next/navigation";
 
 // Validation schema
 const loginSchema = z.object({
