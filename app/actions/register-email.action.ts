@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { ActionState } from "@/lib/types";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 
 // Validation schema
 const signUpSchema = z.object({
@@ -41,15 +42,19 @@ export async function signUpEmailAction(
       password,
       callbackURL: "/profile",
     },
+    asResponse: true, // returns a response object instead of data
   });
 
-  // Check if registration was successful (token exists)
-  if (result.token) {
-    return { success: true, message: "Registration successful!" };
+  // Check if the response is successful
+  if (result.status === 200) {
+    // Successful registration - redirect to profile page
+    redirect("/profile");
   }
 
-  // If no token, registration failed
+  // Handle different error status codes
+  const errorData = await result.json().catch(() => ({}));
+
   return {
-    message: "Registration failed. Please try again.",
+    message: errorData.message || "Registration failed. Please try again.",
   };
 }

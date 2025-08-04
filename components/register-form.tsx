@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition } from "react";
+import { startTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useActionState } from "react";
-import { signUpEmailAction } from "@/app/actions/sign-up-email.action";
+import { signUpEmailAction } from "@/app/actions/register-email.action";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
@@ -64,17 +64,14 @@ export function RegisterForm({
     startTransition(() => {
       formAction(formData);
     });
-  } // Handle successful registration
-  if (state.success) {
-    toast.success(state.message || "Registration successful!");
-    router.push("/profile");
-    return null; // or redirect immediately
   }
 
-  // Handle errors
-  if (state.message && !state.success) {
-    toast.error(state.message);
-  }
+  // Handle errors only (successful registration is handled by server redirect)
+  useEffect(() => {
+    if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state.message]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
