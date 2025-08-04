@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 
 // Validation schema
 const loginSchema = z.object({
@@ -51,10 +52,10 @@ export async function loginEmailAction(
     asResponse: true, // returns a response object instead of data
   });
 
-  // Check if the response is successful (2xx or 3xx status codes)
-  if (result.status >= 200 && result.status < 400) {
-    // Successful login - Better Auth will handle the redirect via callbackURL
-    return { success: true };
+  // Check if the response is successful
+  if (result.status === 200) {
+    // Successful login - redirect to profile page
+    redirect("/profile");
   }
 
   // Handle different error status codes
