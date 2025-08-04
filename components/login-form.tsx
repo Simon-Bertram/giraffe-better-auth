@@ -1,5 +1,20 @@
 "use client";
 
+/**
+ * Login Form Component using Better Auth Server Actions
+ *
+ * This component follows Next.js best practices for error handling:
+ * - Uses useActionState hook for handling expected errors
+ * - Uses startTransition to properly call formAction
+ * - Avoids try/catch for expected errors (validation, auth failures)
+ * - Models expected errors as return values instead of throwing
+ *
+ * Result scenarios:
+ * 1. SUCCESS: When login is successful, the action calls redirect() and returns undefined
+ * 2. VALIDATION ERRORS: Returns { success: false, fieldErrors: {...}, message: "..." }
+ * 3. AUTH ERRORS: Returns { success: false, message: "Login failed...", fieldErrors: {...} }
+ */
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,23 +31,32 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, startTransition } from "react";
+import {
+  loginEmailAction,
+  type LoginActionResult,
+} from "@/app/actions/login-email.action";
+import React from "react";
 
 const formSchema = z.object({
   email: z.string().email().min(6, { message: "Email is required" }),
   password: z.string().min(8, { message: "Password is required" }),
 });
 
+const initialState: LoginActionResult = {
+  success: false,
+};
+
 export default function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [isPending, setIsPending] = useState(false);
-  const router = useRouter();
+  const [state, formAction, pending] = useActionState(
+    loginEmailAction,
+    initialState
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,30 +66,40 @@ export default function LoginForm({
     },
   });
 
+  // Handle form submission
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await signIn.email(
-      {
-        email: values.email,
-        password: values.password,
-        callbackURL: "/profile",
-      },
-      {
-        onRequest: () => {
-          setIsPending(true);
-        },
-        onResponse: () => {
-          setIsPending(false);
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-        onSuccess: () => {
-          toast.success("Logged in successfully");
-          router.push("/profile");
-        },
-      }
-    );
+    // Create FormData for the server action
+    const formData = new FormData();
+    formData.append("email", values.email);
+    formData.append("password", values.password);
+
+    // Call the server action using startTransition
+    startTransition(() => {
+      formAction(formData);
+    });
   }
+
+  // Handle state changes (errors, success messages)
+  React.useEffect(() => {
+    if (state && !state.success) {
+      // Handle field errors
+      if (state.fieldErrors) {
+        Object.entries(state.fieldErrors).forEach(([field, errors]) => {
+          if (errors && errors.length > 0) {
+            form.setError(field as keyof z.infer<typeof formSchema>, {
+              type: "server",
+              message: errors[0],
+            });
+          }
+        });
+      }
+
+      // Show general error message
+      if (state.message) {
+        toast.error(state.message);
+      }
+    }
+  }, [state, form]);
 
   return (
     <>
@@ -73,7 +107,10 @@ export default function LoginForm({
         <Card className="overflow-hidden p-0">
           <CardContent>
             <Form {...form}>
-              <form className="p-6 md:p-8">
+              <form
+                className="p-6 md:p-8"
+                onSubmit={form.handleSubmit(onSubmit)}
+              >
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col items-center text-center">
                     <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -126,15 +163,8 @@ export default function LoginForm({
                     </a>
                   </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    onClick={() => {
-                      form.handleSubmit(onSubmit)();
-                    }}
-                    disabled={isPending}
-                  >
-                    {isPending ? "Logging in..." : "Login"}
+                  <Button type="submit" className="w-full" disabled={pending}>
+                    {pending ? "Logging in..." : "Login"}
                   </Button>
                   <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                     <span className="bg-card text-muted-foreground relative z-10 px-2">
